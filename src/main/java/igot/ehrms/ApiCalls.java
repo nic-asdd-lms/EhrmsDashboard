@@ -18,8 +18,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ApiCalls {
+
+    private static final Logger logger = LoggerFactory.getLogger(ApiCalls.class);
 
     static OrgListApiResponse getOrgList(String parentOrgId) throws IOException, InterruptedException, ParseException {
         String orgListUrl = Constants.SPV_URL + Constants.ORG_LIST_PATH + parentOrgId;
@@ -65,7 +69,7 @@ public class ApiCalls {
                 .uri(URI.create(dashboardUrl))
                 .header("Content-Type", "application/json")
                 .header("Accept","application/json")
-                .header("Cookie","")
+                .header("Cookie",Constants.COOKIE)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
@@ -104,7 +108,7 @@ public class ApiCalls {
                 .uri(URI.create(dashboardUrl))
                 .header("Content-Type", "application/json")
                 .header("Accept","application/json")
-                .header("Cookie","")
+                .header("Cookie",Constants.COOKIE)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
@@ -143,7 +147,7 @@ public class ApiCalls {
                 .uri(URI.create(dashboardUrl))
                 .header("Content-Type", "application/json")
                 .header("Accept","application/json")
-                .header("Cookie","")
+                .header("Cookie",Constants.COOKIE)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
@@ -182,7 +186,7 @@ public class ApiCalls {
                 .uri(URI.create(dashboardUrl))
                 .header("Content-Type", "application/json")
                 .header("Accept","application/json")
-                .header("Cookie","")
+                .header("Cookie",Constants.COOKIE)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
@@ -221,7 +225,7 @@ public class ApiCalls {
                 .uri(URI.create(dashboardUrl))
                 .header("Content-Type", "application/json")
                 .header("Accept","application/json")
-                .header("Cookie","")
+                .header("Cookie",Constants.COOKIE)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
@@ -260,7 +264,7 @@ public class ApiCalls {
                 .uri(URI.create(dashboardUrl))
                 .header("Content-Type", "application/json")
                 .header("Accept","application/json")
-                .header("Cookie","")
+                .header("Cookie",Constants.COOKIE)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
@@ -299,7 +303,7 @@ public class ApiCalls {
                 .uri(URI.create(dashboardUrl))
                 .header("Content-Type", "application/json")
                 .header("Accept","application/json")
-                .header("Cookie","")
+                .header("Cookie",Constants.COOKIE)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
@@ -338,7 +342,7 @@ public class ApiCalls {
                 .uri(URI.create(dashboardUrl))
                 .header("Content-Type", "application/json")
                 .header("Accept","application/json")
-                .header("Cookie","")
+                .header("Cookie",Constants.COOKIE)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
