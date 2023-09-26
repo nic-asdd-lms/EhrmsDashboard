@@ -2,11 +2,13 @@ package igot.ehrms.util;
 
 import igot.ehrms.model.metricsApiRequestBody.RequestBody;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Commons {
-     public static Map<String,Object> buildRequestBody() {
+     public static Map<String,Object> buildRequestBody() throws ParseException {
         Map<String, String> authToken = new HashMap<>();
         authToken.put("authToken", "null");
 
@@ -20,8 +22,8 @@ public class Commons {
         headers.put("headers", tenantId);
 
         Map<String, Object> requestDate = new HashMap<>();
-        requestDate.put(Constants.START_DATE, "1679559767589");
-        requestDate.put(Constants.END_DATE, "1687508567589");
+        requestDate.put(Constants.START_DATE, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse(Constants.FROM_DATE).getTime());
+        requestDate.put(Constants.END_DATE, System.currentTimeMillis());
 
         Map<String, Object> aggregationRequestMap = new HashMap<>();
         aggregationRequestMap.put(Constants.QUERY_TYPE, "");

@@ -16,7 +16,7 @@ public class ResponseData {
     private String comments;
     private String image;
     private String drillDashboard;
-    private String colorScheme;
+    private ColorScheme colorScheme;
     
     public String getChartType() {
         return chartType;
@@ -96,10 +96,10 @@ public class ResponseData {
     public void setDrillDashboard(String drillDashboard) {
         this.drillDashboard = drillDashboard;
     }
-    public String getColorScheme() {
+    public ColorScheme getColorScheme() {
         return colorScheme;
     }
-    public void setColorScheme(String colorScheme) {
+    public void setColorScheme(ColorScheme colorScheme) {
         this.colorScheme = colorScheme;
     }
     

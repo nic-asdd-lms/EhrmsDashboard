@@ -1,9 +1,16 @@
 package igot.ehrms.model.metricsApiResponse;
 
 public class MetricsResponse {
+    private String metric;
     private StatusInfo statusInfo;
     private ResponseData responseData;
     
+    public String getMetric() {
+        return metric;
+    }
+    public void setMetric(String metric) {
+        this.metric = metric;
+    }
     public StatusInfo getStatusInfo() {
         return statusInfo;
     }

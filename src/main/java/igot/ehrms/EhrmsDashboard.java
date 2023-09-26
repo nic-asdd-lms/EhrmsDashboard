@@ -27,13 +27,14 @@ public class EhrmsDashboard {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
+            String token = ApiCalls.login();
             ClassLoader classloader = Thread.currentThread().getContextClassLoader();
             InputStream is = classloader.getResourceAsStream("deptList.json");
 
             Object obj = parser.parse(new InputStreamReader(is));
             JSONObject jsonObject = (JSONObject) obj;
             JSONArray departments = (JSONArray) jsonObject.get("deptList");
-            Iterator iterator = departments.iterator();
+            var iterator = departments.iterator();
 
             while (iterator.hasNext()) {
                 String deptId = iterator.next().toString();
@@ -41,13 +42,13 @@ public class EhrmsDashboard {
                 logger.info("Fetching child organisations of : " + deptId);
                 OrgListApiResponse orgList = ApiCalls.getOrgList(deptId);
 
-                List<Response> data = getMetrics(orgList.getResult().getResponse().getContent());
+                List<Response> data = getMetrics(orgList.getResult().getResponse().getContent(), token);
                 response.put(deptId, data);
             }
-            
+
             JSONObject responseObject = new JSONObject(response);
-            String str = mapper.writeValueAsString(responseObject);
-            
+            String str = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responseObject);
+
             logger.info("Writing result to file");
             FileWriter writer = new FileWriter(Constants.RESPONSE_PATH);
             writer.write(str);
@@ -59,31 +60,29 @@ public class EhrmsDashboard {
 
     }
 
-    private static List<Response> getMetrics(List<OrgListApiResultContent> orgList)
-            throws IOException, ParseException, InterruptedException {
-
+    private static List<Response> getMetrics(List<OrgListApiResultContent> orgList, String accessToken)
+            throws IOException, ParseException, InterruptedException, java.text.ParseException {
+        JSONParser parser = new JSONParser();
+        Object obj = parser.parse(new FileReader(Constants.METADATA));
+        JSONObject jsonObject = (JSONObject) obj;
+        
         List<Response> results = new ArrayList<>();
-        String dashboardUrl = Constants.PORTAL_URL + Constants.METRICS_PATH;
+        String dashboardUrl = Constants.PORTAL_URL + jsonObject.get("url")+ Constants.METRICS_PATH;
         Map<String, Object> requestBody = Commons.buildRequestBody();
+
+        String metricsToken = "Bearer " + jsonObject.get("metricsToken").toString();
 
         for (OrgListApiResultContent org : orgList) {
             if (org.getSbOrgId() != null) {
-                logger.info("Extracting metrics for : '" + org.getOrgName()+'\'');
-                MetricsResponse registeredUsers = ApiCalls.getRegisteredUsers(org.getSbOrgId(), dashboardUrl,
-                        requestBody);
-                MetricsResponse activeUsers = ApiCalls.getActiveUsers(org.getSbOrgId(), dashboardUrl, requestBody);
-                MetricsResponse courseEnrolments = ApiCalls.getCourseEnrolments(org.getSbOrgId(), dashboardUrl,
-                        requestBody);
-                MetricsResponse courseCompletions = ApiCalls.getCourseCompletions(org.getSbOrgId(), dashboardUrl,
-                        requestBody);
-                MetricsResponse coursesPublished = ApiCalls.getCoursesPublished(org.getSbOrgId(), dashboardUrl,
-                        requestBody);
-                MetricsResponse dailyTime = ApiCalls.getDailyTime(org.getSbOrgId(), dashboardUrl, requestBody);
-
-                // MetricsResponse topCourses = ApiCalls.getTopCourses(org.getSbOrgId(),
-                // dashboardUrl, requestBody);
-                // MetricsResponse topUsers = ApiCalls.getTopUsers(org.getSbOrgId(),
-                // dashboardUrl, requestBody);
+                logger.info("Extracting metrics for : '" + org.getOrgName() + '\'');
+                MetricsResponse registeredUsers = ApiCalls.getRegisteredUsers(org.getSbOrgId(), dashboardUrl, requestBody, accessToken, metricsToken);
+                MetricsResponse activeUsers = ApiCalls.getActiveUsers(org.getSbOrgId(), dashboardUrl, requestBody, accessToken, metricsToken);
+                MetricsResponse courseEnrolments = ApiCalls.getCourseEnrolments(org.getSbOrgId(), dashboardUrl, requestBody, accessToken, metricsToken);
+                MetricsResponse courseCompletions = ApiCalls.getCourseCompletions(org.getSbOrgId(), dashboardUrl, requestBody, accessToken, metricsToken);
+                MetricsResponse coursesPublished = ApiCalls.getCoursesPublished(org.getSbOrgId(), dashboardUrl, requestBody, accessToken, metricsToken);
+                MetricsResponse dailyTime = ApiCalls.getDailyTime(org.getSbOrgId(), dashboardUrl, requestBody, accessToken, metricsToken);
+                MetricsResponse topCourses = ApiCalls.getTopCourses(org.getSbOrgId(), dashboardUrl, requestBody, accessToken, metricsToken);
+                MetricsResponse topUsers = ApiCalls.getTopUsers(org.getSbOrgId(), dashboardUrl, requestBody, accessToken, metricsToken);
 
                 List<MetricsResponse> data = new ArrayList<>();
                 data.add(registeredUsers);
@@ -92,8 +91,8 @@ public class EhrmsDashboard {
                 data.add(courseCompletions);
                 data.add(coursesPublished);
                 data.add(dailyTime);
-                // data.add(topCourses);
-                // data.add(topUsers);
+                data.add(topCourses);
+                data.add(topUsers);
                 results.add(new Response(org.getSbOrgId(), org.getOrgName(), data));
             }
 

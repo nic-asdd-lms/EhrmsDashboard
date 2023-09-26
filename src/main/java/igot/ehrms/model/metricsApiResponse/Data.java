@@ -9,7 +9,7 @@ public class Data {
     private String headerSymbol;
     private String colorPaletteCode;
     private String colorPaletteId;
-    private List<String> plots;
+    private List<Plots> plots;
     private String insight;
     private Boolean isDecimal;
     private Map<String,Object> additionalProperties;
@@ -44,10 +44,10 @@ public class Data {
     public void setColorPaletteId(String colorPaletteId) {
         this.colorPaletteId = colorPaletteId;
     }
-    public List<String> getPlots() {
+    public List<Plots> getPlots() {
         return plots;
     }
-    public void setPlots(List<String> plots) {
+    public void setPlots(List<Plots> plots) {
         this.plots = plots;
     }
     public String getInsight() {

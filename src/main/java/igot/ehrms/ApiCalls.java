@@ -2,11 +2,10 @@ package igot.ehrms;
 
 import igot.ehrms.model.metricsApiResponse.MetricsResponse;
 import igot.ehrms.model.orgListApi.OrgListApiResponse;
-import igot.ehrms.util.Commons;
 import igot.ehrms.util.Constants;
 
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -25,29 +24,69 @@ public class ApiCalls {
 
     private static final Logger logger = LoggerFactory.getLogger(ApiCalls.class);
 
-    static OrgListApiResponse getOrgList(String parentOrgId) throws IOException, InterruptedException, ParseException {
-        String orgListUrl = Constants.SPV_URL + Constants.ORG_LIST_PATH + parentOrgId;
-        ObjectMapper mapper  = new ObjectMapper();
+    static String login() throws IOException, InterruptedException, ParseException {
+        JSONParser parser = new JSONParser();
+        Object obj = parser.parse(new FileReader(Constants.METADATA));
+        JSONObject jsonObject = (JSONObject) obj;
+        
+        String authUrl = Constants.PORTAL_URL +jsonObject.get("url")+ Constants.AUTH_PATH;
+        
+        String reqBody = "client_id=admin-cli&password="+jsonObject.get("password")+"@&grant_type=password&username="+jsonObject.get("username");
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(orgListUrl))
-                .header("Content-Type", "application/json")
-                .method("GET", HttpRequest.BodyPublishers.noBody())
+                .uri(URI.create(authUrl))
+                .header(Constants.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                .header(Constants.AUTHORIZATION, "Bearer "+jsonObject.get("loginToken").toString())
+                .method("POST", HttpRequest.BodyPublishers.ofString(reqBody))
                 .build();
 
         HttpResponse<String> response = null;
         response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
+        logger.info("Authenticated");
+
+        parser = new JSONParser();
+        obj = parser.parse(response.body());
+        jsonObject = (JSONObject)obj;
+        String token = jsonObject.get("access_token").toString();
+
+        return token;
+    }
+    static OrgListApiResponse getOrgList(String parentOrgId) throws IOException, InterruptedException, ParseException {
         JSONParser parser = new JSONParser();
-        Object obj = parser.parse(response.body());
-        JSONObject jsonObject = (JSONObject)obj;
+        Object obj = parser.parse(new FileReader(Constants.METADATA));
+        JSONObject jsonObject = (JSONObject) obj;
+        
+        String orgListUrl = Constants.SPV_URL + jsonObject.get("url") + Constants.ORG_LIST_PATH + parentOrgId;
+        ObjectMapper mapper  = new ObjectMapper();
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(orgListUrl))
+                .header(Constants.CONTENT_TYPE, "application/json")
+                .method("GET", HttpRequest.BodyPublishers.noBody())
+                .build();
+
+        HttpResponse<String> response = null;
+        Integer noOfRetries = 5;
+        while(noOfRetries > 0 && (response == null || response.statusCode() == 502))
+        {
+            response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            noOfRetries--;
+
+        }
+            response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+        logger.info("Org list API response : "+response.body());
+
+        obj = parser.parse(response.body());
+        jsonObject = (JSONObject)obj;
 
         OrgListApiResponse orgList = mapper.convertValue(jsonObject, OrgListApiResponse.class);
 
         return orgList;
     }
 
-    public static MetricsResponse getRegisteredUsers(String orgId, String dashboardUrl, Map<String,Object> requestBody ) throws IOException, InterruptedException, ParseException {
+    public static MetricsResponse getRegisteredUsers(String orgId, String dashboardUrl, Map<String,Object> requestBody, String accessToken, String metricsToken ) throws IOException, InterruptedException, ParseException {
         ObjectMapper mapper  = new ObjectMapper();
 
         Map<String, Object> mdoFilter = new HashMap<>();
@@ -59,7 +98,7 @@ public class ApiCalls {
         aggregationRequestMap.put(Constants.VISUALIZATION_CODE, Constants.VISUALISATION_CODE_REGISTERED_USERS);
         aggregationRequestMap.put(Constants.FILTERS, mdoFilter);
 
-        requestBody.put("aggregationRequestDto", aggregationRequestMap);
+        requestBody.put(Constants.AGGREGATION_REQUEST, aggregationRequestMap);
 
         Map<String,Object> requestMap = mapper.convertValue(requestBody, Map.class);
         String reqBodyData = new ObjectMapper().writeValueAsString(requestMap);
@@ -67,26 +106,20 @@ public class ApiCalls {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(dashboardUrl))
-                .header("Content-Type", "application/json")
-                .header("Accept","application/json")
-                .header("Cookie",Constants.COOKIE)
+                .header(Constants.CONTENT_TYPE, "application/json")
+                .header(Constants.ACCEPT,"application/json")
+                .header(Constants.X_AUTH_TOKEN, accessToken)
+                .header(Constants.AUTHORIZATION, metricsToken)
+                .header(Constants.X_CHANNEL_ID, orgId)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
-        HttpResponse<String> response = null;
-        response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-
-        JSONParser parser = new JSONParser();
-        Object obj = parser.parse(response.body());
-        JSONObject jsonObject = (JSONObject)obj;
-
-        MetricsResponse metricsResponse = mapper.convertValue(jsonObject, MetricsResponse.class);
-
-        return metricsResponse;
+        return getMetricsResponse(request,"registeredUsers");
 
     }
 
-    public static MetricsResponse getActiveUsers(String orgId, String dashboardUrl, Map<String,Object> requestBody ) throws IOException, InterruptedException, ParseException {
+
+    public static MetricsResponse getActiveUsers(String orgId, String dashboardUrl, Map<String,Object> requestBody, String accessToken, String metricsToken ) throws IOException, InterruptedException, ParseException {
         ObjectMapper mapper  = new ObjectMapper();
 
         Map<String, Object> mdoFilter = new HashMap<>();
@@ -106,26 +139,20 @@ public class ApiCalls {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(dashboardUrl))
-                .header("Content-Type", "application/json")
-                .header("Accept","application/json")
-                .header("Cookie",Constants.COOKIE)
+                .header(Constants.CONTENT_TYPE, "application/json")
+                .header(Constants.ACCEPT,"application/json")
+                .header(Constants.X_AUTH_TOKEN, accessToken)
+                .header(Constants.AUTHORIZATION, metricsToken)
+                .header(Constants.X_CHANNEL_ID, orgId)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
-        HttpResponse<String> response = null;
-        response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        return getMetricsResponse(request,"activeUsers");
 
-        JSONParser parser = new JSONParser();
-        Object obj = parser.parse(response.body());
-        JSONObject jsonObject = (JSONObject)obj;
-
-        MetricsResponse metricsResponse = mapper.convertValue(jsonObject, MetricsResponse.class);
-
-        return metricsResponse;
 
     }
 
-    public static MetricsResponse getCourseEnrolments(String orgId, String dashboardUrl, Map<String,Object> requestBody ) throws IOException, InterruptedException, ParseException {
+    public static MetricsResponse getCourseEnrolments(String orgId, String dashboardUrl, Map<String,Object> requestBody, String accessToken, String metricsToken ) throws IOException, InterruptedException, ParseException {
         ObjectMapper mapper  = new ObjectMapper();
 
         Map<String, Object> mdoFilter = new HashMap<>();
@@ -145,26 +172,20 @@ public class ApiCalls {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(dashboardUrl))
-                .header("Content-Type", "application/json")
-                .header("Accept","application/json")
-                .header("Cookie",Constants.COOKIE)
+                .header(Constants.CONTENT_TYPE, "application/json")
+                .header(Constants.ACCEPT,"application/json")
+                .header(Constants.X_AUTH_TOKEN, accessToken)
+                .header(Constants.AUTHORIZATION, metricsToken)
+                .header(Constants.X_CHANNEL_ID, orgId)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
-        HttpResponse<String> response = null;
-        response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        return getMetricsResponse(request,"courseEnrolments");
 
-        JSONParser parser = new JSONParser();
-        Object obj = parser.parse(response.body());
-        JSONObject jsonObject = (JSONObject)obj;
-
-        MetricsResponse metricsResponse = mapper.convertValue(jsonObject, MetricsResponse.class);
-
-        return metricsResponse;
 
     }
 
-    public static MetricsResponse getCourseCompletions(String orgId, String dashboardUrl, Map<String,Object> requestBody ) throws IOException, InterruptedException, ParseException {
+    public static MetricsResponse getCourseCompletions(String orgId, String dashboardUrl, Map<String,Object> requestBody, String accessToken, String metricsToken ) throws IOException, InterruptedException, ParseException {
         ObjectMapper mapper  = new ObjectMapper();
 
         Map<String, Object> mdoFilter = new HashMap<>();
@@ -184,26 +205,20 @@ public class ApiCalls {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(dashboardUrl))
-                .header("Content-Type", "application/json")
-                .header("Accept","application/json")
-                .header("Cookie",Constants.COOKIE)
+                .header(Constants.CONTENT_TYPE, "application/json")
+                .header(Constants.ACCEPT,"application/json")
+                .header(Constants.X_AUTH_TOKEN, accessToken)
+                .header(Constants.AUTHORIZATION, metricsToken)
+                .header(Constants.X_CHANNEL_ID, orgId)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
-        HttpResponse<String> response = null;
-        response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        return getMetricsResponse(request,"courseCompletions");
 
-        JSONParser parser = new JSONParser();
-        Object obj = parser.parse(response.body());
-        JSONObject jsonObject = (JSONObject)obj;
-
-        MetricsResponse metricsResponse = mapper.convertValue(jsonObject, MetricsResponse.class);
-
-        return metricsResponse;
 
     }
 
-    public static MetricsResponse getCoursesPublished(String orgId, String dashboardUrl, Map<String,Object> requestBody ) throws IOException, InterruptedException, ParseException {
+    public static MetricsResponse getCoursesPublished(String orgId, String dashboardUrl, Map<String,Object> requestBody, String accessToken, String metricsToken ) throws IOException, InterruptedException, ParseException {
         ObjectMapper mapper  = new ObjectMapper();
 
         Map<String, Object> mdoFilter = new HashMap<>();
@@ -223,26 +238,19 @@ public class ApiCalls {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(dashboardUrl))
-                .header("Content-Type", "application/json")
-                .header("Accept","application/json")
-                .header("Cookie",Constants.COOKIE)
+                .header(Constants.CONTENT_TYPE, "application/json")
+                .header(Constants.ACCEPT,"application/json")
+                .header(Constants.X_AUTH_TOKEN, accessToken)
+                .header(Constants.AUTHORIZATION, metricsToken)
+                .header(Constants.X_CHANNEL_ID, orgId)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
-        HttpResponse<String> response = null;
-        response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-
-        JSONParser parser = new JSONParser();
-        Object obj = parser.parse(response.body());
-        JSONObject jsonObject = (JSONObject)obj;
-
-        MetricsResponse metricsResponse = mapper.convertValue(jsonObject, MetricsResponse.class);
-
-        return metricsResponse;
+        return getMetricsResponse(request,"coursesPublished");
 
     }
 
-    public static MetricsResponse getDailyTime(String orgId, String dashboardUrl, Map<String,Object> requestBody ) throws IOException, InterruptedException, ParseException {
+    public static MetricsResponse getDailyTime(String orgId, String dashboardUrl, Map<String,Object> requestBody, String accessToken, String metricsToken ) throws IOException, InterruptedException, ParseException {
         ObjectMapper mapper  = new ObjectMapper();
 
         Map<String, Object> mdoFilter = new HashMap<>();
@@ -262,26 +270,19 @@ public class ApiCalls {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(dashboardUrl))
-                .header("Content-Type", "application/json")
-                .header("Accept","application/json")
-                .header("Cookie",Constants.COOKIE)
+                .header(Constants.CONTENT_TYPE, "application/json")
+                .header(Constants.ACCEPT,"application/json")
+                .header(Constants.X_AUTH_TOKEN, accessToken)
+                .header(Constants.AUTHORIZATION, metricsToken)
+                .header(Constants.X_CHANNEL_ID, orgId)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
-        HttpResponse<String> response = null;
-        response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-
-        JSONParser parser = new JSONParser();
-        Object obj = parser.parse(response.body());
-        JSONObject jsonObject = (JSONObject)obj;
-
-        MetricsResponse metricsResponse = mapper.convertValue(jsonObject, MetricsResponse.class);
-
-        return metricsResponse;
+        return getMetricsResponse(request,"dailyTimeSpent");
 
     }
 
-    public static MetricsResponse getTopCourses(String orgId, String dashboardUrl, Map<String,Object> requestBody ) throws IOException, InterruptedException, ParseException {
+    public static MetricsResponse getTopCourses(String orgId, String dashboardUrl, Map<String,Object> requestBody, String accessToken, String metricsToken ) throws IOException, InterruptedException, ParseException {
         ObjectMapper mapper  = new ObjectMapper();
 
         Map<String, Object> mdoFilter = new HashMap<>();
@@ -301,26 +302,20 @@ public class ApiCalls {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(dashboardUrl))
-                .header("Content-Type", "application/json")
-                .header("Accept","application/json")
-                .header("Cookie",Constants.COOKIE)
+                .header(Constants.CONTENT_TYPE, "application/json")
+                .header(Constants.ACCEPT,"application/json")
+                .header(Constants.X_AUTH_TOKEN, accessToken)
+                .header(Constants.AUTHORIZATION, metricsToken)
+                .header(Constants.X_CHANNEL_ID, orgId)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
-        HttpResponse<String> response = null;
-        response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        return getMetricsResponse(request,"topCourses");
 
-        JSONParser parser = new JSONParser();
-        Object obj = parser.parse(response.body());
-        JSONObject jsonObject = (JSONObject)obj;
-
-        MetricsResponse metricsResponse = mapper.convertValue(jsonObject, MetricsResponse.class);
-
-        return metricsResponse;
 
     }
 
-    public static MetricsResponse getTopUsers(String orgId, String dashboardUrl, Map<String,Object> requestBody ) throws IOException, InterruptedException, ParseException {
+    public static MetricsResponse getTopUsers(String orgId, String dashboardUrl, Map<String,Object> requestBody, String accessToken, String metricsToken ) throws IOException, InterruptedException, ParseException {
         ObjectMapper mapper  = new ObjectMapper();
 
         Map<String, Object> mdoFilter = new HashMap<>();
@@ -340,25 +335,39 @@ public class ApiCalls {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(dashboardUrl))
-                .header("Content-Type", "application/json")
-                .header("Accept","application/json")
-                .header("Cookie",Constants.COOKIE)
+                .header(Constants.CONTENT_TYPE, "application/json")
+                .header(Constants.ACCEPT,"application/json")
+                .header(Constants.X_AUTH_TOKEN, accessToken)
+                .header(Constants.AUTHORIZATION, metricsToken)
+                .header(Constants.X_CHANNEL_ID, orgId)
                 .method("POST", HttpRequest.BodyPublishers.ofString(reqBodyData))
                 .build();
 
+        return getMetricsResponse(request,"topUsers");
+
+    }
+
+    private static MetricsResponse getMetricsResponse(HttpRequest request, String metricType) throws IOException, InterruptedException, ParseException {
+        ObjectMapper mapper  = new ObjectMapper();
+
         HttpResponse<String> response = null;
-        response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+        Integer noOfRetries = 5;
+        while(noOfRetries > 0 && (response == null || response.statusCode() == 502)){
+            response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            noOfRetries--;
+        }
+
+        logger.info("Metrics API response : "+response.body());
 
         JSONParser parser = new JSONParser();
         Object obj = parser.parse(response.body());
         JSONObject jsonObject = (JSONObject)obj;
 
         MetricsResponse metricsResponse = mapper.convertValue(jsonObject, MetricsResponse.class);
-
+        metricsResponse.setMetric(metricType);
         return metricsResponse;
-
     }
-
 
 
 }

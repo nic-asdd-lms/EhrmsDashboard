@@ -4,9 +4,6 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
-import java.net.http.HttpResponse;
-
-
 import igot.ehrms.model.ApiResponseParams;
 
 public class OrgListApiResponse {
