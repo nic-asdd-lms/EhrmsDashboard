@@ -50,14 +50,7 @@ public class Constants {
 	public static final String DASHBOARD_ID_TOP_USERS = "spvceodd2";
 	public static final String VISUALISATION_TYPE_TOP_USERS = "CHART";
 	public static final String VISUALISATION_CODE_TOP_USERS = "visualization54";
-	// public static final String RESPONSE_PATH = System.getProperty("user.home")+"/ehrms/ehrmsResponse.json";
-	// public static final String METADATA = System.getProperty("user.home")+"/ehrms/metadata_bm.json";
 	public static final String FROM_DATE = "2021-10-01 00:01:01.000";
-
-
-
-
-
 
 	private Constants() {
 		throw new IllegalStateException("Utility class");

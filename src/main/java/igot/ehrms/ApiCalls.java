@@ -29,8 +29,11 @@ public class ApiCalls {
 
     static String login(String config) throws IOException, InterruptedException, ParseException {
         JSONParser parser = new JSONParser();
+        logger.info("Reading file : " + config);
+        FileReader reader = new FileReader(config);
+        
         // Object obj = parser.parse(new FileReader(Constants.METADATA));
-        Object obj = parser.parse(new FileReader(config));
+        Object obj = parser.parse(reader);
         JSONObject jsonObject = (JSONObject) obj;
 
         String authUrl = Constants.PORTAL_URL + jsonObject.get("url") + Constants.AUTH_PATH;
