@@ -1,4 +1,4 @@
-# Igot Dashboard Script
+# iGOT Dashboard Script
 
 Generate analytics data for child organisations of given departments and save it to a json file.
 
