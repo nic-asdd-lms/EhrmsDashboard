@@ -18,7 +18,7 @@ import org.json.simple.parser.*;
 import org.slf4j.LoggerFactory;
 
 public class EhrmsDashboard {
-    private static final Logger logger = (Logger) LoggerFactory.getLogger(ApiCalls.class);
+    private static final Logger logger = (Logger) LoggerFactory.getLogger(EhrmsDashboard.class);
 
     public static void main(String[] args) {
 
@@ -27,7 +27,7 @@ public class EhrmsDashboard {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            String token = ApiCalls.login();
+            String token = ApiCalls.login(args[1]);
             ClassLoader classloader = Thread.currentThread().getContextClassLoader();
             InputStream is = classloader.getResourceAsStream("deptList.json");
 
@@ -40,17 +40,18 @@ public class EhrmsDashboard {
                 String deptId = iterator.next().toString();
 
                 logger.info("Fetching child organisations of : " + deptId);
-                OrgListApiResponse orgList = ApiCalls.getOrgList(deptId);
+                OrgListApiResponse orgList = ApiCalls.getOrgList(deptId,args[1]);
 
-                List<Response> data = getMetrics(orgList.getResult().getResponse().getContent(), token);
+                List<Response> data = getMetrics(orgList.getResult().getResponse().getContent(), token, args[1]);
                 response.put(deptId, data);
             }
 
             JSONObject responseObject = new JSONObject(response);
             String str = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responseObject);
 
-            logger.info("Writing result to file");
-            FileWriter writer = new FileWriter(Constants.RESPONSE_PATH);
+            logger.info("Writing result to file - "+args[0]);
+            // FileWriter writer = new FileWriter(Constants.RESPONSE_PATH);
+            FileWriter writer = new FileWriter(args[0]);
             writer.write(str);
             writer.close();
 
@@ -60,10 +61,11 @@ public class EhrmsDashboard {
 
     }
 
-    private static List<Response> getMetrics(List<OrgListApiResultContent> orgList, String accessToken)
+    private static List<Response> getMetrics(List<OrgListApiResultContent> orgList, String accessToken, String config)
             throws IOException, ParseException, InterruptedException, java.text.ParseException {
         JSONParser parser = new JSONParser();
-        Object obj = parser.parse(new FileReader(Constants.METADATA));
+        // Object obj = parser.parse(new FileReader(Constants.METADATA));
+        Object obj = parser.parse(new FileReader(config));
         JSONObject jsonObject = (JSONObject) obj;
         
         List<Response> results = new ArrayList<>();
