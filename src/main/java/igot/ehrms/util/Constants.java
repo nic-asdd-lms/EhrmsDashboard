@@ -40,7 +40,7 @@ public class Constants {
 	public static final String VISUALISATION_CODE_COURSE_COMPLETIONS = "visualization39";
 	public static final String DASHBOARD_ID_COURSES_PUBLISHED = "spvoperationalmdo";
 	public static final String VISUALISATION_TYPE_COURSES_PUBLISHED = "METRIC";
-	public static final String VISUALISATION_CODE_COURSES_PUBLISHED = "visualization03a";
+	public static final String VISUALISATION_CODE_COURSES_PUBLISHED = "visualization03acopy";
 	public static final String DASHBOARD_ID_DAILY_TIME = "spvceo";
 	public static final String VISUALISATION_TYPE_DAILY_TIME = "METRIC";
 	public static final String VISUALISATION_CODE_DAILY_TIME = "visualization05b";
@@ -51,6 +51,9 @@ public class Constants {
 	public static final String VISUALISATION_TYPE_TOP_USERS = "CHART";
 	public static final String VISUALISATION_CODE_TOP_USERS = "visualization54";
 	public static final String FROM_DATE = "2021-10-01 00:01:01.000";
+	public static final double TOP_USER_COUNT = 5.0;
+	public static final double TOP_COURSE_COUNT = 5.0;
+	
 
 	private Constants() {
 		throw new IllegalStateException("Utility class");

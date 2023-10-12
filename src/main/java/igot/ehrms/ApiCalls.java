@@ -393,7 +393,7 @@ public class ApiCalls {
         JSONObject jsonObject = (JSONObject) obj;
 
         MetricsResponse metricsResponse = mapper.convertValue(jsonObject, MetricsResponse.class);
-        metricsResponse.setMetric(metricType);
+        // metricsResponse.setMetric(metricType);
         return metricsResponse;
     }
 

@@ -3,32 +3,48 @@ package igot.ehrms.model.metricsApiResponse;
 import java.util.List;
 
 public class Response {
-    private String orgId;
-    private String orgName;
-    private List<MetricsResponse> data;
+    private String metricName;
+    private Double metricValue;
+    private List<DrillDownL1> drillDown;
+    private List<Plots> list;
 
-    public Response(String sbOrgId, String orgName, List<MetricsResponse> data) {
-        this.setOrgId(sbOrgId);
-        this.setOrgName(orgName);
-        this.setData(data);
+    public Response(String metricName, Double metricValue, List<DrillDownL1> data, List<Plots> topList) {
+        this.setMetricName(metricName);
+        this.setMetricValue(metricValue);
+        this.setDrillDown(data);
+        this.setList(topList);
     }
-    public String getOrgId() {
-        return orgId;
+
+    public String getMetricName() {
+        return metricName;
     }
-    public void setOrgId(String orgId) {
-        this.orgId = orgId;
+
+    public void setMetricName(String metricName) {
+        this.metricName = metricName;
     }
-    public String getOrgName() {
-        return orgName;
+
+    public Double getMetricValue() {
+        return metricValue;
     }
-    public void setOrgName(String orgName) {
-        this.orgName = orgName;
+
+    public void setMetricValue(Double metricValue) {
+        this.metricValue = metricValue;
     }
-    public List<MetricsResponse> getData() {
-        return data;
+
+    public List<DrillDownL1> getDrillDown() {
+        return drillDown;
     }
-    public void setData(List<MetricsResponse> data) {
-        this.data = data;
+
+    public void setDrillDown(List<DrillDownL1> data) {
+        this.drillDown = data;
+    }
+
+    public List<Plots> getList() {
+        return list;
+    }
+
+    public void setList(List<Plots> topList) {
+        this.list = topList;
     }
 
 }
