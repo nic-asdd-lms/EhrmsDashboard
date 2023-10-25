@@ -376,7 +376,8 @@ public class ApiCalls {
 
     private static MetricsResponse getMetricsResponse(HttpRequest request, String metricType)
             throws IOException, InterruptedException, ParseException {
-        ObjectMapper mapper = new ObjectMapper();
+
+ObjectMapper mapper = new ObjectMapper();
 
         HttpResponse<String> response = null;
 
@@ -395,6 +396,8 @@ public class ApiCalls {
         MetricsResponse metricsResponse = mapper.convertValue(jsonObject, MetricsResponse.class);
         // metricsResponse.setMetric(metricType);
         return metricsResponse;
+               
+        
     }
 
 }

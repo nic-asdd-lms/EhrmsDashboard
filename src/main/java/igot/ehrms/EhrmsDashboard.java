@@ -76,6 +76,7 @@ public class EhrmsDashboard {
                 JSONObject jsonObject = (JSONObject) obj;
 
                 List<Response> results = new ArrayList<>();
+                
                 List<DrillDownL1> registered = new ArrayList<>();
                 List<DrillDownL1> active = new ArrayList<>();
                 List<DrillDownL1> enrolments = new ArrayList<>();
@@ -182,8 +183,8 @@ public class EhrmsDashboard {
         private static List<Plots> getTop(List<DrillDownL1> list, double topCount) {
                 List<Plots> listElements = new ArrayList<>();
 
-                for (DrillDownL1 user : list) {
-                        for (Plots plots : user.getData().getData().get(0).getPlots()) {
+                for (DrillDownL1 listElement : list) {
+                        for (Plots plots : listElement.getData().getData().get(0).getPlots()) {
                                 listElements.add(plots);
                         }
                 }
